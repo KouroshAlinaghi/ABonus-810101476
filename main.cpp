@@ -7,12 +7,13 @@
 
 using namespace std;
 
+#define NUMBER_OF_COLUMNS 4
+#define DISTANCE_IN_TIME 30
+#define MIN_TIME_TO_STAY 15
+#define NICE_TIME_TO_STAY 60
+#define START_TIME 8*60
+
 const vector<string> INFO = { "name", "openingTime", "closingTime", "rank" };
-const int NUMBER_OF_COLUMNS = 4;
-const int DISTANCE_IN_TIME = 30;
-const int MIN_TIME_TO_STAY = 15;
-const int NICE_TIME_TO_STAY = 60;
-const int START_TIME = 8*60;
 
 struct Place {
     string name;
