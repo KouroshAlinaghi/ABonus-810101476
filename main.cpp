@@ -60,7 +60,7 @@ Places generaete_places(vector<string> input_lines) {
     return places;
 }
 
-Places read_input(string filename) {
+vector<string> get_input_lines(string filename) {
     vector<string> input_lines;
     string curr_line;
     ifstream input_file(filename);
@@ -71,7 +71,11 @@ Places read_input(string filename) {
             input_lines.push_back(file_element);
     }
     input_file.close();
-    return generaete_places(input_lines);
+    return input_lines;
+}
+
+Places read_input(string filename) {
+    return generaete_places(get_input_lines(filename));
 }
 
 string minutes_to_string(int input) {
@@ -112,20 +116,13 @@ bool is_place_visitable(int start, Place place) {
 Place change_visit_place(int start, bool found_place, Place place, Place visit_place) {
     if (!found_place)
         return place;
-    else {
-        if (start >= place.opening_time)
-            if (place.rank < visit_place.rank)
-                return place;
-            else 
-                return visit_place;
-        else {
-            if (place.opening_time < visit_place.opening_time)
-                return place;
-            if (place.opening_time == visit_place.opening_time && place.rank < visit_place.rank)
-                return place;
-            return visit_place;
-        }
-    }
+    if (start >= place.opening_time)
+        return place.rank < visit_place.rank ? place : visit_place;
+    if (place.opening_time < visit_place.opening_time)
+        return place;
+    if (place.opening_time == visit_place.opening_time && place.rank < visit_place.rank)
+        return place;
+    return visit_place;
 }
 
 void change_start_and_finish(int& start, int& finish, Place place) {
