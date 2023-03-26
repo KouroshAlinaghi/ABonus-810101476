@@ -27,8 +27,7 @@ struct Place {
 typedef vector<Place> Places;
 
 int get_number_of_places(vector<string> input_lines) {
-    int num_of_places = input_lines.size() / 4 - 1;
-    return num_of_places;
+    return input_lines.size() / 4 - 1;
 }
 
 vector<int> get_order_of_informations(vector<string> input_lines) {
@@ -44,21 +43,17 @@ vector<int> get_order_of_informations(vector<string> input_lines) {
 }
 
 int string_to_minutes(string string_time) {
-    int minutes = 0;
-    minutes = stoi(string_time.substr(0, 2)) * 60 + stoi(string_time.substr(3, 2));
-    return minutes;
+    return stoi(string_time.substr(0, 2)) * 60 + stoi(string_time.substr(3, 2));
 }
 
 Place generate_place(vector<string> input_lines, vector<int> order_of_informations, int i) {
-    Place place = {
+    return {
         input_lines[order_of_informations[0] + i * 4],
         string_to_minutes(input_lines[order_of_informations[1] + i * 4]),
         string_to_minutes(input_lines[order_of_informations[2] + i * 4]),
         stoi(input_lines[order_of_informations[3] + i * 4]),
         false
     };
-
-    return place;
 }
 
 Places generaete_places(vector<string> input_lines) {
@@ -82,9 +77,7 @@ Places read_input(string filename) {
             input_lines.push_back(file_element);
     }
     input_file.close();
-
-    Places place_info = generaete_places(input_lines);
-    return place_info;
+    return generaete_places(input_lines);
 }
 
 string minutes_to_string(int input) {
@@ -115,17 +108,11 @@ void output_printer(int start, int finish, Place place) {
 }
 
 bool is_place_open(int start, Place place) {
-    if (start >= place.opening_time && start <= place.closing_time)
-        return true;
-    else
-        return false;
+    return start >= place.opening_time && start <= place.closing_time;
 }
 
 bool is_place_visitable(int start, Place place) {
-    if (start + 30 + 15 <= place.closing_time)
-        return true;
-    else
-        return false;
+    return start + 30 + 15 <= place.closing_time;
 }
 
 Place change_visit_place(int start, bool found_place, Place place, Place visit_place) {
@@ -140,9 +127,8 @@ Place change_visit_place(int start, bool found_place, Place place, Place visit_p
         else {
             if (place.opening_time < visit_place.opening_time)
                 return place;
-            if (place.opening_time == visit_place.opening_time)
-                if (place.rank < visit_place.rank)
-                    return place;
+            if (place.opening_time == visit_place.opening_time && place.rank < visit_place.rank)
+                return place;
             return visit_place;
         }
     }
