@@ -1,22 +1,20 @@
-#include <iterator>
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <vector>
 #include <string>
-#include <numeric>
-#include <algorithm>
 
 using namespace std;
 
-const string LOCK = "Location ";
 const string NAME = "name";
 const string OPENING_TIME = "openingTime";
 const string CLOSING_TIME = "closingTime";
 const string RANK = "rank";
-const string END_PRINT = "---";
-const string VISIT_FROM = "Visit from ";
-const string UNTIL = " until ";
+const int NUMBER_OF_COLUMNS = 4;
+const int DISTANCE_IN_TIME = 30;
+const int MIN_TIME_TO_STAY = 15;
+const int NICE_TIME_TO_STAY = 60;
+const int START_TIME = 8*60;
 
 struct Place {
     string name;
@@ -27,15 +25,15 @@ struct Place {
 typedef vector<Place> Places;
 
 int get_number_of_places(vector<string> input_lines) {
-    return input_lines.size() / 4 - 1;
+    return input_lines.size() / NUMBER_OF_COLUMNS - 1;
 }
 
 vector<int> get_order_of_informations(vector<string> input_lines) {
     vector<int> order_of_informations;
     vector<string> info = { NAME, OPENING_TIME, CLOSING_TIME, RANK };
 
-    for (int i = 0; i < 4; i++)
-        for (int j = 0; j < 4; j++)
+    for (int i = 0; i < NUMBER_OF_COLUMNS; i++)
+        for (int j = 0; j < NUMBER_OF_COLUMNS; j++)
             if (info[i] == input_lines[j])
                 order_of_informations.push_back(j);
 
@@ -48,10 +46,10 @@ int string_to_minutes(string string_time) {
 
 Place generate_place(vector<string> input_lines, vector<int> order_of_informations, int i) {
     return {
-        input_lines[order_of_informations[0] + i * 4],
-        string_to_minutes(input_lines[order_of_informations[1] + i * 4]),
-        string_to_minutes(input_lines[order_of_informations[2] + i * 4]),
-        stoi(input_lines[order_of_informations[3] + i * 4]),
+        input_lines[order_of_informations[0] + i * NUMBER_OF_COLUMNS],
+        string_to_minutes(input_lines[order_of_informations[1] + i * NUMBER_OF_COLUMNS]),
+        string_to_minutes(input_lines[order_of_informations[2] + i * NUMBER_OF_COLUMNS]),
+        stoi(input_lines[order_of_informations[3] + i * NUMBER_OF_COLUMNS]),
         false
     };
 }
@@ -102,9 +100,9 @@ string minutes_to_string(int input) {
 }
 
 void output_printer(int start, int finish, Place place) {
-    cout << LOCK <<  place.name << endl;
-    cout << VISIT_FROM << minutes_to_string(start) << UNTIL;
-    cout << minutes_to_string(finish) << endl << END_PRINT << endl;
+    cout << "Location " <<  place.name << endl;
+    cout << "Visit from" << minutes_to_string(start) << " until ";
+    cout << minutes_to_string(finish) << endl << "---" << endl;
 }
 
 bool is_place_open(int start, Place place) {
@@ -112,7 +110,7 @@ bool is_place_open(int start, Place place) {
 }
 
 bool is_place_visitable(int start, Place place) {
-    return start + 30 + 15 <= place.closing_time;
+    return start + DISTANCE_IN_TIME + MIN_TIME_TO_STAY <= place.closing_time;
 }
 
 Place change_visit_place(int start, bool found_place, Place place, Place visit_place) {
@@ -135,13 +133,13 @@ Place change_visit_place(int start, bool found_place, Place place, Place visit_p
 }
 
 void change_start_and_finish(int& start, int& finish, Place place) {
-    if (start + 30 < place.opening_time)
+    if (start + DISTANCE_IN_TIME < place.opening_time)
         start = place.opening_time;
     else
-        start += 30;
+        start += DISTANCE_IN_TIME;
 
-    if (place.closing_time - start >= 60)
-        finish = start + 60;
+    if (place.closing_time - start >= NICE_TIME_TO_STAY)
+        finish = start + NICE_TIME_TO_STAY;
     else
         finish = place.closing_time;
 }
@@ -179,7 +177,7 @@ bool find_visit_place(int& start, int& finnish, Places& places, Place& visit_pla
 
 int main(int argc, char* argv[]) {
     Places places = read_input(argv[1]);
-    int finish = 8 * 60, start = 8 * 60 - 30;
+    int finish = START_TIME, start = START_TIME - DISTANCE_IN_TIME;
     Place visit_place;
     while (find_visit_place(start, finish, places, visit_place)) {
         output_printer(start, finish, visit_place);
