@@ -3,6 +3,7 @@
 #include <sstream>
 #include <vector>
 #include <string>
+#include <iomanip>
 
 using namespace std;
 
@@ -79,24 +80,9 @@ Places read_input(string filename) {
 }
 
 string minutes_to_string(int input) {
-    string result = "";
-    int hours = input / 60;
-    int minutes = input % 60;
-    if (hours >= 10)
-        result += to_string(hours);
-    else {
-        result += "0";
-        result += to_string(hours);
-    }
-    result += ":";
-    if (minutes >= 10)
-        result += to_string(minutes);
-    else {
-        result += "0";
-        result += to_string(minutes);
-    }
-    
-    return result;
+    stringstream ss;
+    ss << setw(2) << std::setfill('0') << (int)(input/60) << ":" << setw(2) << std::setfill('0') << (int)(input%60);
+    return ss.str();
 }
 
 void output_printer(int start, int finish, Place place) {
