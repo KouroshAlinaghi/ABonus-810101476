@@ -18,15 +18,13 @@ const string RANK = "rank";
 const string END_PRINT = "---";
 
 
-struct Places
-{
-    vector<string> name;
-    vector<int> opening_time;
-    vector<int> closing_time;
-    vector<int> rank;
-    vector<int> visited;
+struct Place {
+    string name;
+    int opening_time, closing_time, rank;
+    bool visited;
 };
 
+typedef vector<Place> Places;
 
 const string VISIT_FROM = "Visit from ";
 const string UNTIL = " until ";
@@ -54,21 +52,28 @@ int string_to_minutes(string string_time)
     return minutes;
 }
 
+Place generate_place(vector<string> input_lines, vector<int> order_of_informations, int i) {
+    Place place = {
+        input_lines[order_of_informations[0] + i * 4],
+        string_to_minutes(input_lines[order_of_informations[1] + i * 4]),
+        string_to_minutes(input_lines[order_of_informations[2] + i * 4]),
+        stoi(input_lines[order_of_informations[3] + i * 4]),
+        false
+    };
+
+    return place;
+}
+
 Places generaete_places(vector<string> input_lines)
 {
-    Places place_info;
+    Places places;
     int number_of_places = get_number_of_places(input_lines);
     vector<int> order_of_informations = get_order_of_informations(input_lines);
     for (int i = 1; i <= number_of_places; i++)
     {
-        place_info.name.push_back(input_lines[order_of_informations[0] + i * 4]);
-        place_info.opening_time.push_back(string_to_minutes(input_lines[order_of_informations[1] + i * 4]));
-        place_info.closing_time.push_back(string_to_minutes(input_lines[order_of_informations[2] + i * 4]));
-        int rank = stoi(input_lines[order_of_informations[3] + i * 4]);
-        place_info.rank.push_back(rank);
-        place_info.visited.push_back(0);
+        places.push_back(generate_place(input_lines, order_of_informations, i));
     }
-    return place_info;
+    return places;
 }
 
 Places read_input(string filename)
@@ -120,70 +125,88 @@ string minutes_to_string(int input)
     return result;
 }
 
-void output_printer(int start, int finish, Places places, int place_index)
+void output_printer(int start, int finish, Place place)
 {
-    cout << LOCK <<  places.name[place_index] << endl;
+    cout << LOCK <<  place.name << endl;
     cout << VISIT_FROM << minutes_to_string(start) << UNTIL;
     cout << minutes_to_string(finish) << endl << END_PRINT << endl;
 }
 
 
-bool is_place_open(int& start, int i, Places places)
+bool is_place_open(int start, Place place)
 {
-    if (start >= places.opening_time[i] && start <= places.closing_time[i])
+    if (start >= place.opening_time && start <= place.closing_time)
         return true;
     else
         return false;
 
 }
 
-bool is_place_visitable(int& start, int i, Places places)
+bool is_place_visitable(int start, Place place)
 {
-    if (start + 30 + 15 <= places.closing_time[i])
+    if (start + 30 + 15 <= place.closing_time)
         return true;
     else
         return false;
 }
 
-int change_visit_index(int start, int visit_index, int i, Places places)
+Place change_visit_place(int start, bool found_place, Place place, Place visit_place)
 {
-    if (visit_index == -1)
-        return i;
+    if (!found_place)
+        return place;
     else
     {
-        if (start >= places.opening_time[i]) if (places.rank[i] <    places.rank[visit_index]) return i; else return visit_index;
+        if (start >= place.opening_time) if (place.rank <    visit_place.rank) return place; else return visit_place;
         else
         {
-            if (places.opening_time[i] < places.opening_time[visit_index]) return i;
-            if (places.opening_time[i] == places.opening_time[visit_index]) if (places.rank[i] < places.rank[visit_index]) return i;
-            return visit_index;
+            if (place.opening_time < visit_place.opening_time) return place;
+            if (place.opening_time == visit_place.opening_time) if (place.rank < visit_place.rank) return place;
+            return visit_place;
         }
     }
 }
 
-void change_start_and_finish(int& start,   int& finish,   Places places,int visit_index) {
-    if (start + 30 < places.opening_time[visit_index])
-        start = places.opening_time[visit_index];
+void change_start_and_finish(int& start,   int& finish,   Place place) {
+    if (start + 30 < place.opening_time)
+        start = place.opening_time;
     else
         start += 30;
-    if (places.closing_time[visit_index] - start >= 60)
+    if (place.closing_time - start >= 60)
         finish = start + 60;
     else
-        finish = places.closing_time[visit_index];
+        finish = place.closing_time;
 }
 
-int visit_place_index(int &start,    int &finnish,   Places& places) {
-    int visit_index = -1;
-    for (int i = 0; i < places.name.size(); i++) if (is_place_open(start,i,places) && is_place_visitable(start, i, places) && places.visited[i] == 0) visit_index = change_visit_index(start,visit_index, i, places);
-    if (visit_index == -1) for (int i = 0; i < places.name.size(); i++) if (start < places.opening_time[i] && is_place_visitable(start, i, places) && places.visited[i] == 0) visit_index = change_visit_index(start, visit_index, i, places);
-    if (visit_index >= 0)
-    {
+void mark_as_visited(Places& places, Place visited_place) {
+    for (Place& place : places)
+        if (place.name == visited_place.name) {
+            place.visited = true;
+            return;
+        }
+}
 
-        places.visited[visit_index] = 1;
-        change_start_and_finish(start, finnish, places, visit_index);
-    }  
+bool find_visit_place(int &start,    int &finnish, Places& places, Place& visit_place) {
+    bool found_place = false;
+    for (Place place : places)
+        if (is_place_open(start,place) && is_place_visitable(start, place) && !place.visited) {
+            visit_place = change_visit_place(start,found_place, place, visit_place);
+            found_place = true;
+        }
+    
+    if (!found_place)
+        for (Place place : places)
+            if (start < place.opening_time && is_place_visitable(start, place) && !place.visited) {
+                visit_place = change_visit_place(start,found_place, place, visit_place);
+                found_place = true;
+            }
 
-    return visit_index;
+    if (found_place)
+    {   
+        mark_as_visited(places, visit_place);
+        change_start_and_finish(start, finnish, visit_place);
+    }
+
+    return found_place;
 }
 
 
@@ -192,12 +215,11 @@ int main(int argc, char* argv[])
 {
     Places places = read_input(argv[1]);
     int finish = 8 * 60, start = 8 * 60 - 30;
-    int index_of_place_to_visit = visit_place_index(start, finish, places);
-    while (index_of_place_to_visit != -1)
+    Place visit_place;
+    while (find_visit_place(start, finish, places, visit_place))
     {
-        output_printer(start, finish, places, index_of_place_to_visit);
+        output_printer(start, finish, visit_place);
         start = finish;
-        index_of_place_to_visit = visit_place_index(start, finish, places);
     }
 
 
