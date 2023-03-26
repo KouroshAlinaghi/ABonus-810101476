@@ -6,10 +6,7 @@
 
 using namespace std;
 
-const string NAME = "name";
-const string OPENING_TIME = "openingTime";
-const string CLOSING_TIME = "closingTime";
-const string RANK = "rank";
+const vector<string> INFO = { "name", "openingTime", "closingTime", "rank" };
 const int NUMBER_OF_COLUMNS = 4;
 const int DISTANCE_IN_TIME = 30;
 const int MIN_TIME_TO_STAY = 15;
@@ -30,11 +27,10 @@ int get_number_of_places(vector<string> input_lines) {
 
 vector<int> get_order_of_informations(vector<string> input_lines) {
     vector<int> order_of_informations;
-    vector<string> info = { NAME, OPENING_TIME, CLOSING_TIME, RANK };
 
     for (int i = 0; i < NUMBER_OF_COLUMNS; i++)
         for (int j = 0; j < NUMBER_OF_COLUMNS; j++)
-            if (info[i] == input_lines[j])
+            if (INFO[i] == input_lines[j])
                 order_of_informations.push_back(j);
 
     return order_of_informations;
