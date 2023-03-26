@@ -15,9 +15,13 @@ using namespace std;
 
 const vector<string> INFO = { "name", "openingTime", "closingTime", "rank" };
 
+typedef int TimeInMinutes;
+typedef pair<TimeInMinutes, TimeInMinutes> TimeRange;
+
 struct Place {
     string name;
-    int opening_time, closing_time, rank;
+    TimeRange opening_range;
+    int rank;
     bool visited;
 };
 
@@ -38,15 +42,17 @@ vector<int> get_order_of_informations(vector<string> input_lines) {
     return order_of_informations;
 }
 
-int string_to_minutes(string string_time) {
+TimeInMinutes string_to_minutes(string string_time) {
     return stoi(string_time.substr(0, 2)) * 60 + stoi(string_time.substr(3, 2));
 }
 
 Place generate_place(vector<string> input_lines, vector<int> order_of_informations, int i) {
     return {
         input_lines[order_of_informations[0] + i * NUMBER_OF_COLUMNS],
-        string_to_minutes(input_lines[order_of_informations[1] + i * NUMBER_OF_COLUMNS]),
-        string_to_minutes(input_lines[order_of_informations[2] + i * NUMBER_OF_COLUMNS]),
+        make_pair(
+            string_to_minutes(input_lines[order_of_informations[1] + i * NUMBER_OF_COLUMNS]), 
+            string_to_minutes(input_lines[order_of_informations[2] + i * NUMBER_OF_COLUMNS])
+        ),
         stoi(input_lines[order_of_informations[3] + i * NUMBER_OF_COLUMNS]),
         false
     };
@@ -80,48 +86,48 @@ Places read_input(string filename) {
     return generaete_places(get_input_lines(filename));
 }
 
-string minutes_to_string(int input) {
+string time_to_string(TimeInMinutes input) {
     stringstream ss;
     ss << setw(2) << std::setfill('0') << (int)(input/60) << ":" << setw(2) << std::setfill('0') << (int)(input%60);
     return ss.str();
 }
 
-void output_printer(int start, int finish, Place place) {
+void output_printer(TimeRange time_range, Place place) {
     cout << "Location " <<  place.name << endl;
-    cout << "Visit from" << minutes_to_string(start) << " until ";
-    cout << minutes_to_string(finish) << endl << "---" << endl;
+    cout << "Visit from" << time_to_string(time_range.first) << " until ";
+    cout << time_to_string(time_range.second) << endl << "---" << endl;
 }
 
-bool is_place_open(int start, Place place) {
-    return start >= place.opening_time && start <= place.closing_time;
+bool is_place_open(TimeInMinutes start, Place place) {
+    return start >= place.opening_range.first && start <= place.opening_range.second;
 }
 
-bool is_place_visitable(int start, Place place) {
-    return start + DISTANCE_IN_TIME + MIN_TIME_TO_STAY <= place.closing_time;
+bool is_place_visitable(TimeInMinutes start, Place place) {
+    return start + DISTANCE_IN_TIME + MIN_TIME_TO_STAY <= place.opening_range.second;
 }
 
-Place change_visit_place(int start, bool found_place, Place place, Place visit_place) {
+Place change_visit_place(TimeInMinutes start, bool found_place, Place place, Place visit_place) {
     if (!found_place)
         return place;
-    if (start >= place.opening_time)
+    if (start >=place.opening_range.first)
         return place.rank < visit_place.rank ? place : visit_place;
-    if (place.opening_time < visit_place.opening_time)
+    if (place.opening_range.first < visit_place.opening_range.first)
         return place;
-    if (place.opening_time == visit_place.opening_time && place.rank < visit_place.rank)
+    if (place.opening_range.first == visit_place.opening_range.first && place.rank < visit_place.rank)
         return place;
     return visit_place;
 }
 
-void change_start_and_finish(int& start, int& finish, Place place) {
-    if (start + DISTANCE_IN_TIME < place.opening_time)
-        start = place.opening_time;
+void change_start_and_finish(TimeRange& time_range, Place place) {
+    if (time_range.first + DISTANCE_IN_TIME < place.opening_range.first)
+        time_range.first = place.opening_range.first;
     else
-        start += DISTANCE_IN_TIME;
+        time_range.first += DISTANCE_IN_TIME;
 
-    if (place.closing_time - start >= NICE_TIME_TO_STAY)
-        finish = start + NICE_TIME_TO_STAY;
+    if (place.opening_range.second - time_range.first >= NICE_TIME_TO_STAY)
+        time_range.second = time_range.first + NICE_TIME_TO_STAY;
     else
-        finish = place.closing_time;
+        time_range.second = place.opening_range.second;
 }
 
 void mark_as_visited(Places& places, Place visited_place) {
@@ -132,24 +138,24 @@ void mark_as_visited(Places& places, Place visited_place) {
         }
 }
 
-bool find_visit_place(int& start, int& finnish, Places& places, Place& visit_place) {
+bool find_visit_place(TimeRange& time_range, Places& places, Place& visit_place) {
     bool found_place = false;
     for (Place place : places)
-        if (is_place_open(start,place) && is_place_visitable(start, place) && !place.visited) {
-            visit_place = change_visit_place(start,found_place, place, visit_place);
+        if (is_place_open(time_range.first, place) && is_place_visitable(time_range.first, place) && !place.visited) {
+            visit_place = change_visit_place(time_range.first, found_place, place, visit_place);
             found_place = true;
         }
     
     if (!found_place)
         for (Place place : places)
-            if (start < place.opening_time && is_place_visitable(start, place) && !place.visited) {
-                visit_place = change_visit_place(start,found_place, place, visit_place);
+            if (time_range.first < place.opening_range.first && is_place_visitable(time_range.first, place) && !place.visited) {
+                visit_place = change_visit_place(time_range.first, found_place, place, visit_place);
                 found_place = true;
             }
 
     if (found_place) {   
         mark_as_visited(places, visit_place);
-        change_start_and_finish(start, finnish, visit_place);
+        change_start_and_finish(time_range, visit_place);
     }
 
     return found_place;
@@ -157,11 +163,11 @@ bool find_visit_place(int& start, int& finnish, Places& places, Place& visit_pla
 
 int main(int argc, char* argv[]) {
     Places places = read_input(argv[1]);
-    int finish = START_TIME, start = START_TIME - DISTANCE_IN_TIME;
+    TimeRange start_and_finish = make_pair(START_TIME - DISTANCE_IN_TIME, START_TIME);
     Place visit_place;
-    while (find_visit_place(start, finish, places, visit_place)) {
-        output_printer(start, finish, visit_place);
-        start = finish;
+    while (find_visit_place(start_and_finish, places, visit_place)) {
+        output_printer(start_and_finish, visit_place);
+        start_and_finish.first = start_and_finish.second;
     }
 
     return 0;
