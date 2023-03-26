@@ -114,7 +114,6 @@ void output_printer(int start, int finish, Place place) {
     cout << minutes_to_string(finish) << endl << END_PRINT << endl;
 }
 
-
 bool is_place_open(int start, Place place) {
     if (start >= place.opening_time && start <= place.closing_time)
         return true;
